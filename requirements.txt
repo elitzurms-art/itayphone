@@ -1,0 +1,18 @@
+# ItayPhone Python dependencies
+
+# Serial communication with the SIM7600 modem (AT commands).
+pyserial>=3.5
+
+# Touchscreen UI framework. On Raspberry Pi prefer the apt package
+# (python3-kivy) — pip would build from source. 2.1+ is enough (Debian Bookworm
+# ships 2.1). Not required for --mock headless logic/tests.
+kivy>=2.1.0
+
+# Bidi (right-to-left) reordering for Hebrew text in the Kivy UI. Kivy's SDL2
+# text backend renders glyphs in logical order, so Hebrew needs reordering to
+# visual order before display. On the Pi prefer apt (python3-bidi).
+# Not required for --mock headless logic/tests.
+python-bidi>=0.4.2
+
+# --- dev / test ---
+pytest>=8.0

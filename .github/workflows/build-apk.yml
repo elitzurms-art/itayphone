@@ -1,0 +1,30 @@
+name: Build Android APK
+
+# Builds an installable debug APK in the cloud on every push (and on demand),
+# so no local Linux / Android SDK setup is needed. Download it from the run's
+# "Artifacts" section, copy to the phone, and install (allow unknown sources).
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build the APK with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: stable
+
+      - name: Upload the APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: itayphone-apk
+          path: ${{ steps.buildozer.outputs.filename }}
