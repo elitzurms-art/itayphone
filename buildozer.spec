@@ -30,6 +30,10 @@ android.archs = arm64-v8a
 android.allow_backup = True
 android.accept_sdk_license = True
 
+# Let ItayPhone be set as the phone's HOME launcher, so leaving any app returns
+# here instead of the stock Android home.
+android.manifest.intent_filters = android/intent_filters.xml
+
 # Useful Android module bridges for runtime permissions / storage helpers.
 android.enable_androidx = True
 

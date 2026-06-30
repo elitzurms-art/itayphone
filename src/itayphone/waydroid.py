@@ -15,6 +15,8 @@ FEATURED = [
     ("WhatsApp", "com.whatsapp"),
     ("Telegram", "org.telegram.messenger"),
     ("Chrome", "com.android.chrome"),
+    ("YouTube", "com.google.android.youtube"),
+    ("ביט", "com.bnhp.payments.paymentsapp"),
 ]
 
 

@@ -1,0 +1,8 @@
+<!-- Extra intent filter on the main activity so ItayPhone can be chosen as the
+     phone's HOME launcher: leaving any app then returns to ItayPhone, not to
+     the stock Android home. (Referenced from buildozer.spec.) -->
+<intent-filter>
+    <action android:name="android.intent.action.MAIN" />
+    <category android:name="android.intent.category.HOME" />
+    <category android:name="android.intent.category.DEFAULT" />
+</intent-filter>

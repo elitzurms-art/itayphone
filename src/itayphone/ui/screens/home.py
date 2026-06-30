@@ -12,7 +12,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.widget import Widget
 
 from ...modem.models import NetworkStatus
-from ..theme import (BLUE, GREEN, INDIGO, ORANGE, PURPLE, TEAL, H, dock,
+from ..theme import (BLUE, GREEN, INDIGO, ORANGE, PURPLE, RED, TEAL, H, dock,
                      gradient_bg, ios_icon, set_badge)
 
 _WEEKDAYS = ["יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי",
@@ -83,9 +83,16 @@ class HomeScreen(Screen):
         self.tile_chrome = ios_icon(
             "🌐", "Chrome", ORANGE,
             lambda: self.app.waydroid.launch("com.android.chrome"))
+        self.tile_youtube = ios_icon(
+            "▶️", "YouTube", RED,
+            lambda: self.app.waydroid.launch("com.google.android.youtube"))
+        self.tile_bit = ios_icon(
+            "💰", "ביט", BLUE,
+            lambda: self.app.waydroid.launch("com.bnhp.payments.paymentsapp"))
         for t in (self.tile_phone, self.tile_messages, self.tile_contacts,
                   self.tile_camera, self.tile_gallery, self.tile_whatsapp,
-                  self.tile_telegram, self.tile_chrome):
+                  self.tile_telegram, self.tile_chrome, self.tile_youtube,
+                  self.tile_bit):
             grid.add_widget(t)
         root.add_widget(grid)
 
