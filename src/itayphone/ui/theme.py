@@ -761,7 +761,9 @@ def home_bar(on_home, on_recents=None, on_prev=None, on_next=None):
     from kivy.uix.floatlayout import FloatLayout
     from kivy.uix.widget import Widget
 
-    bar = FloatLayout(size_hint_y=None, height=24)
+    # A taller-than-it-looks strip: the pill is drawn thin near the bottom, but
+    # the whole 44px zone catches swipes so flicking between apps is reliable.
+    bar = FloatLayout(size_hint_y=None, height=44)
 
     # The pill — drawn on its own canvas, repositioned manually so we can lift
     # it with the finger. No background strip, so nothing reads as a black bar.

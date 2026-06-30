@@ -79,7 +79,7 @@ class HomeScreen(Screen):
             lambda: self.app.launch_app("com.whatsapp"))
         self.tile_telegram = ios_icon(
             "✈️", "Telegram", INDIGO,
-            lambda: self.app.launch_app("org.telegram.messenger"))
+            lambda: self.app.launch_app("org.telegram.messenger.web"))
         self.tile_chrome = ios_icon(
             "🌐", "Chrome", ORANGE,
             lambda: self.app.launch_app("com.android.chrome"))
@@ -91,10 +91,13 @@ class HomeScreen(Screen):
             lambda: self.app.launch_app("com.bnhp.payments.paymentsapp"))
         self.tile_parental = ios_icon("🔒", "הורים", INDIGO,
                                       lambda: self.app.go("parental"))
+        # Opens the dynamic drawer listing every installed Android app.
+        self.tile_apps = ios_icon("📱", "אפליקציות", TEAL,
+                                  lambda: self.app.go("apps"))
         for t in (self.tile_phone, self.tile_messages, self.tile_contacts,
                   self.tile_camera, self.tile_gallery, self.tile_whatsapp,
                   self.tile_telegram, self.tile_chrome, self.tile_youtube,
-                  self.tile_bit, self.tile_parental):
+                  self.tile_bit, self.tile_apps, self.tile_parental):
             grid.add_widget(t)
         root.add_widget(grid)
 

@@ -13,7 +13,7 @@ from dataclasses import dataclass
 # Apps we surface prominently in the launcher, with their Android package ids.
 FEATURED = [
     ("WhatsApp", "com.whatsapp"),
-    ("Telegram", "org.telegram.messenger"),
+    ("Telegram", "org.telegram.messenger.web"),
     ("Chrome", "com.android.chrome"),
     ("YouTube", "com.google.android.youtube"),
     ("ביט", "com.bnhp.payments.paymentsapp"),

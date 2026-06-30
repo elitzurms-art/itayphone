@@ -19,6 +19,7 @@ from kivy.uix.screenmanager import ScreenManager, SlideTransition
 from ..contacts import ContactStore
 from ..history import CallLog
 from ..modem.models import SMS
+from .screens.apps import AppsScreen
 from .screens.bluetooth import BluetoothScreen
 from .screens.call import CallScreen
 from .screens.camera import CameraScreen
@@ -78,6 +79,7 @@ class ItayPhoneApp(App):
             RecentsScreen(name="recents", app=self),
             CameraScreen(name="camera", app=self),
             GalleryScreen(name="gallery", app=self),
+            AppsScreen(name="apps", app=self),
             WifiScreen(name="wifi", app=self),
             BluetoothScreen(name="bluetooth", app=self),
             ParentalScreen(name="parental", app=self),
