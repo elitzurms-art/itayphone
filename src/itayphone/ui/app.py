@@ -27,10 +27,11 @@ from .screens.dialer import DialerScreen
 from .screens.gallery import GalleryScreen
 from .screens.home import HomeScreen
 from .screens.messages import MessagesScreen
+from .screens.parental import ParentalScreen
 from .screens.recents import RecentsScreen
 from .screens.wifi import WifiScreen
-from .theme import (BLUE, GREEN, INDIGO, ORANGE, PURPLE, TEAL, H, apply_theme,
-                    control_center, home_bar)
+from .theme import (BLUE, GREEN, INDIGO, ORANGE, PURPLE, SURFACE, TEAL, H,
+                    apply_theme, control_center, home_bar)
 
 
 class ItayPhoneApp(App):
@@ -49,6 +50,12 @@ class ItayPhoneApp(App):
             from ..system import build_system
             system = build_system(mock=True)
         self.system = system
+        # Parental controls store, kept next to the other data files.
+        import os
+        from ..parental import ParentalStore
+        self.parental = ParentalStore(
+            os.path.join(os.path.dirname(os.path.expanduser(contacts.path)),
+                         "parental.json"))
         self.sm: ScreenManager | None = None
         self._incoming_rec = None   # in-progress incoming call's history record
         self.android = None         # set on Android: routes calls/SMS to the OS
@@ -73,6 +80,7 @@ class ItayPhoneApp(App):
             GalleryScreen(name="gallery", app=self),
             WifiScreen(name="wifi", app=self),
             BluetoothScreen(name="bluetooth", app=self),
+            ParentalScreen(name="parental", app=self),
         ):
             self.sm.add_widget(screen)
 
@@ -169,6 +177,47 @@ class ItayPhoneApp(App):
         self.sm.transition.direction = "left"
         self.sm.current = screen_name
 
+    def launch_app(self, package: str) -> None:
+        """Launch an Android app — but ask for the parent PIN if it's blocked."""
+        if self.parental.is_blocked(package):
+            self._require_parent_pin(lambda: self.waydroid.launch(package))
+        else:
+            self.waydroid.launch(package)
+
+    def _require_parent_pin(self, on_ok) -> None:
+        from kivy.uix.boxlayout import BoxLayout
+        from kivy.uix.button import Button
+        from kivy.uix.label import Label
+        from kivy.uix.popup import Popup
+        from kivy.uix.textinput import TextInput
+
+        box = BoxLayout(orientation="vertical", spacing=10, padding=14)
+        box.add_widget(Label(text=H("אפליקציה חסומה — הזן קוד הורים"),
+                             size_hint_y=None, height=40))
+        field = TextInput(password=True, multiline=False, input_filter="int",
+                          font_size="24sp", halign="center", size_hint_y=None,
+                          height=54)
+        box.add_widget(field)
+        btns = BoxLayout(size_hint_y=None, height=48, spacing=10)
+        cancel = Button(text=H("ביטול"), background_color=SURFACE)
+        ok = Button(text=H("פתח"), background_color=GREEN)
+        btns.add_widget(cancel)
+        btns.add_widget(ok)
+        box.add_widget(btns)
+        popup = Popup(title="הורים", content=box, size_hint=(0.86, None),
+                      height=220, title_align="center")
+        cancel.bind(on_release=popup.dismiss)
+
+        def go(*_):
+            if self.parental.check_pin(field.text.strip()):
+                popup.dismiss()
+                on_ok()
+            else:
+                field.text = ""
+        ok.bind(on_release=go)
+        field.bind(on_text_validate=go)
+        popup.open()
+
     def _capture_thumb(self, name: str) -> None:
         """Snapshot screen *name* to a png for the app-switcher preview."""
         import os
@@ -254,7 +303,7 @@ class ItayPhoneApp(App):
 
         def dock_chrome():
             self._close_switcher()
-            self.waydroid.launch("com.android.chrome")
+            self.launch_app("com.android.chrome")
 
         # The same four apps as the home-screen dock.
         dock_items = [

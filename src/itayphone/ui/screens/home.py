@@ -76,23 +76,25 @@ class HomeScreen(Screen):
         # Android (Waydroid) apps live as first-class home tiles.
         self.tile_whatsapp = ios_icon(
             "💬", "WhatsApp", GREEN,
-            lambda: self.app.waydroid.launch("com.whatsapp"))
+            lambda: self.app.launch_app("com.whatsapp"))
         self.tile_telegram = ios_icon(
             "✈️", "Telegram", INDIGO,
-            lambda: self.app.waydroid.launch("org.telegram.messenger"))
+            lambda: self.app.launch_app("org.telegram.messenger"))
         self.tile_chrome = ios_icon(
             "🌐", "Chrome", ORANGE,
-            lambda: self.app.waydroid.launch("com.android.chrome"))
+            lambda: self.app.launch_app("com.android.chrome"))
         self.tile_youtube = ios_icon(
             "▶️", "YouTube", RED,
-            lambda: self.app.waydroid.launch("com.google.android.youtube"))
+            lambda: self.app.launch_app("com.google.android.youtube"))
         self.tile_bit = ios_icon(
             "💰", "ביט", BLUE,
-            lambda: self.app.waydroid.launch("com.bnhp.payments.paymentsapp"))
+            lambda: self.app.launch_app("com.bnhp.payments.paymentsapp"))
+        self.tile_parental = ios_icon("🔒", "הורים", INDIGO,
+                                      lambda: self.app.go("parental"))
         for t in (self.tile_phone, self.tile_messages, self.tile_contacts,
                   self.tile_camera, self.tile_gallery, self.tile_whatsapp,
                   self.tile_telegram, self.tile_chrome, self.tile_youtube,
-                  self.tile_bit):
+                  self.tile_bit, self.tile_parental):
             grid.add_widget(t)
         root.add_widget(grid)
 
@@ -104,7 +106,7 @@ class HomeScreen(Screen):
             ("📞", GREEN, lambda: self.app.go("dialer")),
             ("💬", BLUE, lambda: self.app.go("messages")),
             ("📷", TEAL, lambda: self.app.go("camera")),
-            ("🌐", ORANGE, lambda: self.app.waydroid.launch("com.android.chrome")),
+            ("🌐", ORANGE, lambda: self.app.launch_app("com.android.chrome")),
         ]))
 
         self.add_widget(root)
