@@ -322,15 +322,14 @@ class ItayPhoneApp(App):
         self._root.add_widget(self._switcher)
         Animation(opacity=1, d=0.16, t="out_quad").start(self._switcher)
 
-    def _switcher_close(self, name, card) -> None:
-        """Flick-up to close an app: drop it from recents + remove its card."""
+    def _switcher_close(self, name) -> None:
+        """Flick-up to close an app: drop it from recents (the deck removed the
+        card already)."""
         self._hist = [n for n in self._hist if n != name]
         if not self._hist:
             self._hist = ["home"]
         self._hist_idx = min(self._hist_idx, len(self._hist) - 1)
         self._thumbs.pop(name, None)
-        if card.parent is not None:
-            card.parent.remove_widget(card)
 
     def _close_switcher(self, *_) -> None:
         if self._switcher is not None:
