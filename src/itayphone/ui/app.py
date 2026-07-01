@@ -186,6 +186,17 @@ class ItayPhoneApp(App):
         else:
             self.waydroid.launch(package)
 
+    def pin_to_home(self, package: str) -> None:
+        """Add an Android app to the home screen (from the Apps drawer)."""
+        try:
+            home = self.sm.get_screen("home")
+            if home.grid.add_app(package):
+                self._toast("הוצמד למסך הבית")
+            else:
+                self._toast("כבר במסך הבית")
+        except Exception:
+            pass
+
     def _require_parent_pin(self, on_ok) -> None:
         from kivy.uix.boxlayout import BoxLayout
         from kivy.uix.button import Button

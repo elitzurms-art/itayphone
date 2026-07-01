@@ -73,6 +73,33 @@ class AppsScreen(Screen):
         for a in sorted(apps, key=lambda x: x.name.lower()):
             glyph, colour = _KNOWN.get(a.package, _DEFAULT)
             pkg = a.package
+            st = {"long": False}
             tile = ios_icon(glyph, a.name, colour,
-                            lambda p=pkg: self.app.launch_app(p))
+                            (lambda p=pkg, s=st: self._tap(p, s)))
+            self._attach_longpress(tile.icon, pkg, st)
             self.grid.add_widget(tile)
+
+    def _tap(self, package: str, st: dict) -> None:
+        # A long-press already pinned it; don't also launch.
+        if st["long"]:
+            st["long"] = False
+            return
+        self.app.launch_app(package)
+
+    def _attach_longpress(self, btn, package: str, st: dict) -> None:
+        """Long-press an app icon to pin it to the home screen."""
+        ev = {"e": None}
+
+        def on_state(_w, value):
+            if value == "down":
+                st["long"] = False
+                ev["e"] = Clock.schedule_once(
+                    lambda *_: self._pin(package, st), 0.5)
+            elif ev["e"]:
+                ev["e"].cancel()
+                ev["e"] = None
+        btn.bind(state=on_state)
+
+    def _pin(self, package: str, st: dict) -> None:
+        st["long"] = True
+        self.app.pin_to_home(package)

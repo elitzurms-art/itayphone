@@ -6,14 +6,14 @@ from datetime import datetime
 
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
+from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.uix.widget import Widget
 
 from ...modem.models import NetworkStatus
-from ..theme import (BLUE, GREEN, INDIGO, ORANGE, PURPLE, RED, TEAL, H, dock,
-                     gradient_bg, ios_icon, set_badge)
+from ..theme import (BLUE, GREEN, ORANGE, TEAL, H, dock, gradient_bg, set_badge)
+from .launcher import LauncherGrid
 
 _WEEKDAYS = ["יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי",
              "שבת", "יום ראשון"]
@@ -58,48 +58,9 @@ class HomeScreen(Screen):
         widget.add_widget(self.date)
         root.add_widget(widget)
 
-        # -- app grid (iOS rounded icons, 4 columns) --------------------------
-        grid = GridLayout(cols=4, spacing=[10, 16], padding=[2, 12, 2, 6],
-                          size_hint_y=None, row_default_height=96,
-                          row_force_default=True)
-        grid.bind(minimum_height=grid.setter("height"))
-        self.tile_phone = ios_icon("📞", "טלפון", GREEN,
-                                   lambda: self.app.go("dialer"))
-        self.tile_messages = ios_icon("💬", "הודעות", BLUE,
-                                      lambda: self.app.go("messages"))
-        self.tile_contacts = ios_icon("👥", "אנשי קשר", PURPLE,
-                                      lambda: self.app.go("contacts"))
-        self.tile_camera = ios_icon("📷", "מצלמה", TEAL,
-                                    lambda: self.app.go("camera"))
-        self.tile_gallery = ios_icon("🖼️", "גלריה", PURPLE,
-                                     lambda: self.app.go("gallery"))
-        # Android (Waydroid) apps live as first-class home tiles.
-        self.tile_whatsapp = ios_icon(
-            "💬", "WhatsApp", GREEN,
-            lambda: self.app.launch_app("com.whatsapp"))
-        self.tile_telegram = ios_icon(
-            "✈️", "Telegram", INDIGO,
-            lambda: self.app.launch_app("org.telegram.messenger.web"))
-        self.tile_chrome = ios_icon(
-            "🌐", "Chrome", ORANGE,
-            lambda: self.app.launch_app("com.android.chrome"))
-        self.tile_youtube = ios_icon(
-            "▶️", "YouTube", RED,
-            lambda: self.app.launch_app("com.google.android.youtube"))
-        self.tile_bit = ios_icon(
-            "💰", "ביט", BLUE,
-            lambda: self.app.launch_app("com.bnhp.payments.paymentsapp"))
-        self.tile_parental = ios_icon("🔒", "הורים", INDIGO,
-                                      lambda: self.app.go("parental"))
-        # Opens the dynamic drawer listing every installed Android app.
-        self.tile_apps = ios_icon("📱", "אפליקציות", TEAL,
-                                  lambda: self.app.go("apps"))
-        for t in (self.tile_phone, self.tile_messages, self.tile_contacts,
-                  self.tile_camera, self.tile_gallery, self.tile_whatsapp,
-                  self.tile_telegram, self.tile_chrome, self.tile_youtube,
-                  self.tile_bit, self.tile_apps, self.tile_parental):
-            grid.add_widget(t)
-        root.add_widget(grid)
+        # -- editable launcher grid (long-press to edit, drag to reorder) -----
+        self.grid = LauncherGrid(self.app, on_edit=self._on_edit)
+        root.add_widget(self.grid)
 
         # Flexible spacer keeps the icon grid up top and the dock at the bottom.
         root.add_widget(Widget())
@@ -114,8 +75,30 @@ class HomeScreen(Screen):
 
         self.add_widget(root)
 
+        # "Done" button — only visible while editing the home screen.
+        self.done_btn = Button(
+            text=H("סיום"), size_hint=(None, None), size=(78, 32),
+            pos_hint={"right": 0.96, "top": 0.985}, opacity=0, disabled=True,
+            background_color=(0.12, 0.12, 0.15, 0.92), font_size="15sp",
+            bold=True)
+        self.done_btn.bind(on_release=lambda *_: self.grid.exit_edit())
+        self.add_widget(self.done_btn)
+
         Clock.schedule_interval(lambda dt: self._tick(), 1)
         self._tick()
+
+    def _on_edit(self, editing: bool) -> None:
+        self.done_btn.opacity = 1 if editing else 0
+        self.done_btn.disabled = not editing
+
+    def on_touch_down(self, touch):
+        # While editing, a tap on empty wallpaper finishes editing.
+        if getattr(self, "grid", None) is not None and self.grid.edit_mode:
+            handled = super().on_touch_down(touch)
+            if not handled:
+                self.grid.exit_edit()
+            return True
+        return super().on_touch_down(touch)
 
     def _tick(self) -> None:
         now = datetime.now()
@@ -130,6 +113,9 @@ class HomeScreen(Screen):
         self.signal.text = f"{bars}  " + H(operator) + "  100%"
 
     def update_badges(self, unread_sms: int, missed_calls: int) -> None:
-        set_badge(self.tile_messages, unread_sms)
-        # Recents lives inside the Phone app now, so missed calls badge it.
-        set_badge(self.tile_phone, missed_calls)
+        msg = self.grid.tile_for("messages")
+        phone = self.grid.tile_for("dialer")   # Recents lives in the Phone app
+        if msg:
+            set_badge(msg, unread_sms)
+        if phone:
+            set_badge(phone, missed_calls)
