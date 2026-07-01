@@ -23,7 +23,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
 from ..theme import (BLUE, GREEN, INDIGO, ORANGE, PURPLE, RED, TEAL, H,
-                     emoji_image)
+                     _squircle, emoji_image)
 
 # -- catalogue ---------------------------------------------------------------
 # Built-in screens: key -> (emoji, hebrew label, colour, screen-to-go-to).
@@ -126,25 +126,11 @@ class _Tile(BoxLayout):
         self._moved = False
         self._lp_ev = None
 
-        holder = FloatLayout(size_hint=(1, None), height=66)
+        # Reuse the proven, reliably-centred squircle from the theme instead of
+        # hand-placing the icon (which raced the layout and drifted off-centre).
+        holder = _squircle(emoji, colour, lambda: None, 62)
         self.holder = holder
-        with holder.canvas.before:
-            self._col = Color(*colour)
-            self._sq = RoundedRectangle(radius=[14])
-        img = emoji_image(emoji)
-        img.size_hint = (None, None)
-        img.size = (40, 40)
-
-        def _place(*_):
-            self._sq.size = (62, 62)
-            self._sq.pos = (holder.center_x - 31, holder.center_y - 31)
-            img.center = holder.center
-            self.badge.center_x = holder.center_x + 31
-            self.badge.center_y = holder.center_y + 31
-            self.rm.center_x = holder.center_x - 31
-            self.rm.center_y = holder.center_y + 31
-        holder.bind(pos=_place, size=_place)
-        holder.add_widget(img)
+        btn = holder.btn
 
         # unread/missed badge (top-right) — kept for phone/messages
         self.badge = Label(text="", font_size="12sp", bold=True,
@@ -168,11 +154,19 @@ class _Tile(BoxLayout):
                      size=lambda *_: setattr(self.rm._bg, "size", self.rm.size))
         holder.add_widget(self.rm)
 
+        # Pin the badges to the (reliably-centred) icon button's corners.
+        def _badges(*_):
+            self.badge.center_x = btn.right - 2
+            self.badge.center_y = btn.top - 2
+            self.rm.center_x = btn.x + 2
+            self.rm.center_y = btn.top - 2
+        btn.bind(pos=_badges, size=_badges)
+
         self.add_widget(holder)
         self.cap = Label(text=H(label), font_size="12sp", bold=True,
                          size_hint_y=None, height=18, color=(1, 1, 1, 1))
         self.add_widget(self.cap)
-        _place()
+        Clock.schedule_once(lambda *_: _badges(), 0)
 
     def set_edit(self, editing: bool) -> None:
         self.rm.opacity = 1 if editing else 0
