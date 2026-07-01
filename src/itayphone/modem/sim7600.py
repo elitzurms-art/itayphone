@@ -21,6 +21,7 @@ import re
 from typing import Callable
 
 from .models import SMS, CallState, NetworkStatus
+from .transport import ATError
 
 # +CSQ: <rssi>,<ber> ; rssi 0..31 maps linearly to -113..-51 dBm, 99 = unknown
 _CSQ_RE = re.compile(r"\+CSQ:\s*(\d+),")
@@ -57,15 +58,28 @@ class SIM7600:
 
     # -- lifecycle ---------------------------------------------------------
     def setup(self, pin: str | None = None) -> None:
-        """Open the port and put the modem into a known state."""
+        """Open the port and put the modem into a known state.
+
+        Each configuration command is best-effort: with no SIM inserted (or
+        before the modem is ready) commands like ``AT+CMGF`` return ``ERROR``,
+        and the phone must still boot — just without cellular service. So we
+        swallow :class:`ATError` per command instead of crashing at startup.
+        """
         self._t.open()
-        self._t.send("AT")            # sanity check / autobaud
-        self._t.send("ATE0")          # disable command echo
+
+        def _try(cmd: str) -> None:
+            try:
+                self._t.send(cmd)
+            except ATError:
+                pass
+
+        _try("AT")            # sanity check / autobaud
+        _try("ATE0")          # disable command echo
         if pin:
-            self._t.send(f'AT+CPIN="{pin}"')
-        self._t.send("AT+CMGF=1")     # SMS text mode
-        self._t.send("AT+CLIP=1")     # show caller id on incoming calls
-        self._t.send('AT+CNMI=2,1,0,0,0')  # notify on new SMS via +CMTI
+            _try(f'AT+CPIN="{pin}"')
+        _try("AT+CMGF=1")     # SMS text mode
+        _try("AT+CLIP=1")     # show caller id on incoming calls
+        _try('AT+CNMI=2,1,0,0,0')  # notify on new SMS via +CMTI
 
     def close(self) -> None:
         self._t.close()
