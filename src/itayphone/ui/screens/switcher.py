@@ -85,7 +85,15 @@ def _preview(thumb_path, color):
 
 
 def _card(name, thumb_path):
-    emoji_g, label, color = _META.get(name, ("📱", name, INDIGO))
+    if name.startswith("app:"):
+        from .launcher import APP_META
+        pkg = name[4:]
+        if pkg in APP_META:
+            emoji_g, label, color = APP_META[pkg]
+        else:
+            emoji_g, label, color = "📱", pkg.rsplit(".", 1)[-1], INDIGO
+    else:
+        emoji_g, label, color = _META.get(name, ("📱", name, INDIGO))
     card = _Card(name)
     head = BoxLayout(size_hint_y=None, height=30, spacing=6, padding=[6, 0])
     ic = emoji_image(emoji_g)

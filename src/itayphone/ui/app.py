@@ -180,11 +180,30 @@ class ItayPhoneApp(App):
         self.sm.current = screen_name
 
     def launch_app(self, package: str) -> None:
-        """Launch an Android app — but ask for the parent PIN if it's blocked."""
+        """Launch an Android app (recording it in recents) — PIN if blocked."""
         if self.parental.is_blocked(package):
-            self._require_parent_pin(lambda: self.waydroid.launch(package))
+            self._require_parent_pin(lambda: self._do_launch(package))
         else:
-            self.waydroid.launch(package)
+            self._do_launch(package)
+
+    def _do_launch(self, package: str) -> None:
+        self._record_recent("app:" + package)
+        self.waydroid.launch(package)
+
+    def _record_recent(self, entry: str) -> None:
+        """Append a screen name or 'app:<pkg>' to the nav history (for recents)."""
+        if self._hist and self._hist[self._hist_idx] == entry:
+            return
+        del self._hist[self._hist_idx + 1:]
+        self._hist.append(entry)
+        self._hist_idx = len(self._hist) - 1
+
+    def _activate(self, entry: str) -> None:
+        """Show a screen, or (re)launch an Android app for an 'app:' entry."""
+        if entry.startswith("app:"):
+            self.waydroid.launch(entry[4:])
+        else:
+            self.sm.current = entry
 
     def pin_to_home(self, package: str) -> None:
         """Add an Android app to the home screen (from the Apps drawer)."""
@@ -274,7 +293,7 @@ class ItayPhoneApp(App):
             self._hist_idx -= 1
             self._last_back = time.time()
             self.sm.transition.direction = "right"
-            self.sm.current = self._hist[self._hist_idx]
+            self._activate(self._hist[self._hist_idx])
 
     def nav_next_app(self) -> None:
         """Swipe left: reverse a recent right-swipe (forward), else nothing."""
@@ -285,7 +304,7 @@ class ItayPhoneApp(App):
                 self._hist_idx < len(self._hist) - 1:
             self._hist_idx += 1
             self.sm.transition.direction = "left"
-            self.sm.current = self._hist[self._hist_idx]
+            self._activate(self._hist[self._hist_idx])
 
     def go_home(self) -> None:
         self._close_switcher()
@@ -308,7 +327,10 @@ class ItayPhoneApp(App):
 
         def pick(name):
             self._close_switcher()
-            self.go(name)
+            if name.startswith("app:"):
+                self.launch_app(name[4:])
+            else:
+                self.go(name)
 
         def dock_go(name):
             self._close_switcher()
